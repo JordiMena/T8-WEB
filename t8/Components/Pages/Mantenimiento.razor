@@ -1,0 +1,103 @@
+@page "/mantenimiento"
+@inject t8.Data.AppDbContext DbContext
+@rendermode InteractiveServer
+@using t8.Models
+
+<PageTitle>MantenimientoXDDD</PageTitle>
+
+<h3>Mantenimiento</h3>
+
+<EditForm Model="nuevoDetenido" OnValidSubmit="GuardarDetenido">
+    <DataAnnotationsValidator />
+    
+    <div class="mb-3">
+        <label for="fechaDetencion" class="form-label">Fecha de Detención:</label>
+        <InputDate id="fechaDetencion" class="form-control" @bind-Value="nuevoDetenido.FechaDetencion"></InputDate>
+        <ValidationMessage For="() => nuevoDetenido.FechaDetencion" />
+    </div>
+
+    <div class="mb-3">
+        <label for="nombreApellido" class="form-label">Nombre y Apellido:</label>
+        <InputText id="nombreApellido" class="form-control" @bind-Value="nuevoDetenido.NombreApellido"></InputText>
+        <ValidationMessage For="() => nuevoDetenido.NombreApellido" />
+    </div>
+
+    <div class="mb-3">
+        <label for="numeroPasaporte" class="form-label">Número de Pasaporte:</label>
+        <InputText id="numeroPasaporte" class="form-control" @bind-Value="nuevoDetenido.NumeroPasaporte"></InputText>
+        <ValidationMessage For="() => nuevoDetenido.NumeroPasaporte" />
+    </div>
+
+    <div class="mb-3">
+        <label for="fechaNacimiento" class="form-label">Fecha de Nacimiento:</label>
+        <InputDate id="fechaNacimiento" class="form-control" @bind-Value="nuevoDetenido.FechaNacimiento"></InputDate>
+        <ValidationMessage For="() => nuevoDetenido.FechaNacimiento" />
+    </div>
+
+    <div class="mb-3">
+        <label for="coordenadas" class="form-label">Coordenadas:</label>
+        <InputText id="coordenadas" class="form-control" @bind-Value="nuevoDetenido.Coordenadas"></InputText>
+        <ValidationMessage For="() => nuevoDetenido.Coordenadas" />
+    </div>
+
+    <div class="text-center">
+        <button type="submit" class="btn btn-primary">Guardar</button>
+    </div>
+</EditForm>
+
+<h4>Lista de Detenidos</h4>
+<ul class="list-group">
+    @foreach (var detenido in detenidos)
+    {
+        <li class="list-group-item d-flex justify-content-between align-items-center">
+            <div>
+                <strong>Fecha:</strong> @detenido.FechaDetencion.ToShortDateString() <br />
+                <strong>Nombre:</strong> @detenido.NombreApellido <br />
+                <strong>Pasaporte:</strong> @detenido.NumeroPasaporte
+            </div>
+            <div>
+                <button class="btn btn-primary btn-sm" @onclick="() => EditarDetenido(detenido)">Editar</button>
+                <button class="btn btn-danger btn-sm" @onclick="() => EliminarDetenido(detenido)">Eliminar</button>
+            </div>
+        </li>
+    }
+</ul>
+
+
+@code {
+    private List<Detenido> detenidos = new();
+    private Detenido nuevoDetenido = new();
+
+    protected override void OnInitialized()
+    {
+        detenidos = DbContext.Detenidos.ToList();
+    }
+
+    private async Task GuardarDetenido()
+    {
+        if (nuevoDetenido.Id == 0)
+        {
+            DbContext.Detenidos.Add(nuevoDetenido);
+        }
+        else
+        {
+            DbContext.Detenidos.Update(nuevoDetenido);
+        }
+
+        await DbContext.SaveChangesAsync();
+        detenidos = DbContext.Detenidos.ToList();
+        nuevoDetenido = new Detenido();
+    }
+
+    private void EditarDetenido(Detenido detenido)
+    {
+        nuevoDetenido = detenido;
+    }
+
+    private async Task EliminarDetenido(Detenido detenido)
+    {
+        DbContext.Detenidos.Remove(detenido);
+        await DbContext.SaveChangesAsync();
+        detenidos = DbContext.Detenidos.ToList();
+    }
+}

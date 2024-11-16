@@ -1,0 +1,45 @@
+﻿@inherits LayoutComponentBase
+
+<div class="page">
+    
+    </div>
+
+<div class="main-layout">
+    <!-- Barra de Navegación -->
+    <nav class="navbar navbar-expand-lg navbar-light bg-light">
+        <a class="navbar-brand" href="/">Detenciones de Migración</a>
+        <div class="collapse navbar-collapse">
+            <ul class="navbar-nav mr-auto">
+                <!-- Enlace a la sección de Mantenimiento -->
+                <li class="nav-item">
+                    <NavLink class="nav-link" href="mantenimiento">Mantenimiento</NavLink>
+                </li>
+                <!-- Enlace a la sección de Calendario -->
+                <li class="nav-item">
+                    <NavLink class="nav-link" href="calendario">Calendario</NavLink>
+                </li>
+                <!-- Enlace a la sección de Mapa -->
+                <li class="nav-item">
+                    <NavLink class="nav-link" href="mapa">Mapa</NavLink>
+                </li>
+                <!-- Enlace a la sección Acerca de -->
+                <li class="nav-item">
+                    <NavLink class="nav-link" href="acerca-de">Acerca de</NavLink>
+                </li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- Contenido de las páginas -->
+    <div class="content">
+        @Body
+    </div>
+</div>
+
+
+
+<div id="blazor-error-ui">
+    An unhandled error has occurred.
+    <a href="" class="reload">Reload</a>
+    <a class="dismiss">🗙</a>
+</div>

@@ -1,0 +1,159 @@
+@page "/calendario"
+@inject t8.Data.AppDbContext DbContext
+@rendermode InteractiveServer
+@using Microsoft.EntityFrameworkCore;
+@using t8.Models
+
+<h3>Calendario de Detenciones</h3>
+
+@if (fechasDetenciones.Count > 0)
+{
+    <div>
+        <button @onclick="MostrarCalendario">Mostrar Calendario</button>
+    </div>
+}
+
+@if (mostrarCalendario)
+{
+    <table class="table">
+        <thead>
+            <tr>
+                @foreach (var dia in diasDeLaSemana)
+                {
+                    <th>@dia</th>
+                }
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var semana in calendario)
+            {
+                <tr>
+                    @foreach (var dia in semana)
+                    {
+                        <td @onclick="() => MostrarDetenciones(dia)">
+                            @dia.Nombre
+                            @if (detencionesPorDia.ContainsKey(dia.Nombre))
+                            {
+                                <span class="badge bg-info">@detencionesPorDia[dia.Nombre].Count</span>
+                            }
+                        </td>
+                    }
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@if (modalVisible)
+{
+    <div class="modal" tabindex="-1" style="display:block;" role="dialog">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Detenciones en @fechaSeleccionada.ToShortDateString()</h5>
+                    <button type="button" class="close" @onclick="CerrarModal">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <ul>
+                        @foreach (var detenido in detencionesPorDia[fechaSeleccionada.ToString("yyyy-MM-dd")])
+                        {
+                            <li>@detenido.NombreApellido - @detenido.FechaDetencion.ToShortDateString()</li>
+                        }
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private List<string> diasDeLaSemana = new List<string> { "Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb" };
+    private List<List<DiaCalendario>> calendario = new List<List<DiaCalendario>>();
+    private bool mostrarCalendario = false;
+    private Dictionary<string, List<Detenido>> detencionesPorDia = new Dictionary<string, List<Detenido>>();
+    private DateTime fechaSeleccionada;
+    private bool modalVisible = false;
+
+    private List<DiaCalendario> fechasDetenciones = new List<DiaCalendario>
+    {
+        new DiaCalendario { Fecha = new DateTime(2024, 11, 1), Nombre = "2024-11-01" },
+        new DiaCalendario { Fecha = new DateTime(2024, 11, 5), Nombre = "2024-11-05" },
+        new DiaCalendario { Fecha = new DateTime(2024, 11, 10), Nombre = "2024-11-10" }
+    };
+
+    protected override async Task OnInitializedAsync()
+    {
+        await CargarDetenciones();
+        GenerarCalendario();
+    }
+
+    private void GenerarCalendario()
+    {
+        DateTime primerDiaDelMes = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1);
+        int diasDelMes = DateTime.DaysInMonth(primerDiaDelMes.Year, primerDiaDelMes.Month);
+        int primerDiaDeLaSemana = (int)primerDiaDelMes.DayOfWeek;
+        int diaDelMes = 1;
+
+        calendario.Clear();
+
+        for (int i = 0; i < 6; i++) // máximo 6 semanas
+        {
+            List<DiaCalendario> semana = new List<DiaCalendario>();
+
+            for (int j = 0; j < 7; j++)
+            {
+                if (i == 0 && j < primerDiaDeLaSemana)
+                {
+                    semana.Add(null); // Celdas vacías antes del primer día del mes
+                }
+                else if (diaDelMes <= diasDelMes)
+                {
+                    var fecha = new DateTime(primerDiaDelMes.Year, primerDiaDelMes.Month, diaDelMes);
+                    semana.Add(new DiaCalendario { Fecha = fecha, Nombre = fecha.ToString("yyyy-MM-dd") });
+                    diaDelMes++;
+                }
+                else
+                {
+                    semana.Add(null); // Rellenar las celdas vacías al final del mes
+                }
+            }
+
+            calendario.Add(semana);
+        }
+    }
+
+    private async Task CargarDetenciones()
+    {
+        var detenidos = await DbContext.Set<Detenido>().ToListAsync();
+        foreach (var detenido in detenidos)
+        {
+            var fecha = detenido.FechaDetencion.ToString("yyyy-MM-dd");
+            if (!detencionesPorDia.ContainsKey(fecha))
+            {
+                detencionesPorDia[fecha] = new List<Detenido>();
+            }
+            detencionesPorDia[fecha].Add(detenido);
+        }
+    }
+
+    private void MostrarDetenciones(DiaCalendario dia)
+    {
+        if (dia != null && detencionesPorDia.ContainsKey(dia.Nombre))
+        {
+            fechaSeleccionada = dia.Fecha;
+            modalVisible = true;
+        }
+    }
+
+    private void CerrarModal()
+    {
+        modalVisible = false;
+    }
+
+    private void MostrarCalendario()
+    {
+        mostrarCalendario = !mostrarCalendario;
+    }
+}
